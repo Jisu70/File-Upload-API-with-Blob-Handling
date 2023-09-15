@@ -1,112 +1,106 @@
-// Model 
-const Photo = require('../models/Photo')
-var fs = require('fs');
-var path = require('path');
-var multer = require('multer');
-var storage = multer.diskStorage({
+const Photo = require('../models/Photo');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads')
+        cb(null, 'uploads');
     },
     filename: (req, file, cb) => {
-        cb(null, file.fieldname + '-' + Date.now())
+        cb(null, file.fieldname + '-' + Date.now());
     }
 });
- 
-var upload = multer({ storage: storage });
 
-//Get route
+const upload = multer({ storage: storage });
+
+// Get route
 const getRoute = async (req, res) => {
     try {
-        Photo.find({})
-    .then((data, err)=>{
-        if(err){
-            console.log(err);
-        }
-        res.render('imagepage',{items: data})
-    })
+        const data = await Photo.find({});
+        res.render('imagepage', { items: data });
     } catch (error) {
-        
+        console.error('Error in getRoute:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
 // Post route
 const postRoute = async (req, res) => {
     try {
-        const {name, description, } = req.body ;
-        var obj = {
+        const { name, description } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: 'Image file is required' });
+        }
+        const obj = {
             name,
             description,
             img: {
                 data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
                 contentType: 'image/png'
             }
-        }
-        Photo.create(obj)
-        .then ((err, item) => {
-            if (err) {
-                console.log(err);
-            }
-            else {
-                item.save();
-                res.redirect('/');
-            }
-        });
+        };
+        const item = new Photo(obj);
+        await item.save();
+        res.redirect('/');
     } catch (error) {
-        
+        console.error('Error in postRoute:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
 // Put route
 const putRoute = async (req, res) => {
     try {
-        var obj = {
+        const { name, description } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: 'Image file is required' });
+        }
+        const obj = {
             name,
             description,
             img: {
                 data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
                 contentType: 'image/png'
             }
-        }
-    const updatedPhoto = await Photo.findByIdAndUpdate(
-      req.params.id,
-      obj,
-      { new: true }
-    );
-    if (!obj) {
-      return res.status(404).json({
-        error: "Photo not found",
-      });
-    }
-
-    res.status(200).json({
-      message: "Photo updated successfully!",
-      updatedPhoto: updatedPhoto,
-    }); 
-    } catch (error) {
-        
-    }
-}
-//Delete route
-const deleteRoute = (req, res) => {
-    try {
-        const deletedPhoto = await Photo.deleteOne({ _id: req.params.id });
-    
-        if (!deletedPhoto) {
-          return res.status(404).json({
-            error: "Photo not found",
-          });
+        };
+        const updatedPhoto = await Photo.findByIdAndUpdate(
+            req.params.id,
+            obj,
+            { new: true }
+        );
+        if (!updatedPhoto) {
+            return res.status(404).json({ error: 'Photo not found' });
         }
         res.status(200).json({
-          message: "Photo deleted successfully!",
-          deletedPhoto: deletedPhoto,
+            message: 'Photo updated successfully!',
+            updatedPhoto: updatedPhoto,
         });
-      } catch (error) {
-        res.status(500).json({
-          error: "There was a server-side error",
+    } catch (error) {
+        console.error('Error in putRoute:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Delete route
+const deleteRoute = async (req, res) => {
+    try {
+        const deletedPhoto = await Photo.deleteOne({ _id: req.params.id });
+        if (!deletedPhoto.deletedCount) {
+            return res.status(404).json({ error: 'Photo not found' });
+        }
+        res.status(200).json({
+            message: 'Photo deleted successfully!',
+            deletedPhoto: deletedPhoto,
         });
-      }
-}
+    } catch (error) {
+        console.error('Error in deleteRoute:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 module.exports = {
-    getRoute, postRoute, putRoute, deleteRoute
-}
+    getRoute,
+    postRoute,
+    putRoute,
+    deleteRoute,
+};

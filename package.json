@@ -1,7 +1,7 @@
 {
-  "name": "nodejs-sandbox",
+  "name": "mws-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "This is a Node.js project.",
   "main": "index.html",
   "scripts": {
     "start": "nodemon index.js"
