@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Display Image</title>
+</head>
+<body>
+  <img id="photo" src="" alt="Photo" />
+
+  <script>
+    const photoId = '65080aefdce770b050b76512';
+    const imgElement = document.getElementById('photo');
+
+    fetch(`http://localhost:3000/api/${photoId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        imgElement.src = url;
+      })
+      .catch(error => {
+        console.error('Error fetching image:', error);
+      });
+  </script>
+</body>
+</html>

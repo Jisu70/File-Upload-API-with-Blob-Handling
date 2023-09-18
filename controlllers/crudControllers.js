@@ -1,13 +1,19 @@
 const Photo = require("../models/Photo");
 const fs = require("fs");
 const path = require("path");
-const mime = require('mime');
+const mime = require("mime");
 
 // Get route
+// GET route to fetch image by ID
 const getRoute = async (req, res) => {
   try {
-    const data = await Photo.find({});
-    res.status(200).json({ Data: data });
+    const photo = await Photo.findById(req.params.id);
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    res.set("Content-Type", photo.img.contentType);
+    res.send(photo.img.data);
   } catch (error) {
     console.error("Error in getRoute:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -18,11 +24,11 @@ const getRoute = async (req, res) => {
 const postRoute = async (req, res) => {
   try {
     const { name, description } = req.body;
+    console.log(name, description);
     if (!req.file) {
       return res.status(400).json({ error: "Image file is required" });
     }
-    const fileExtension = path.extname(req.file.originalname).toLowerCase()
-    console.log(fileExtension);
+    const fileExtension = path.extname(req.file.originalname).toLowerCase();
     const obj = {
       name,
       description,
@@ -30,12 +36,12 @@ const postRoute = async (req, res) => {
         data: fs.readFileSync(
           path.join(__dirname, `../uploads/${req.file.filename}`)
         ),
-        contentType:
-          mime.getType(fileExtension) || 'application/octet-stream'
-      }
+        contentType: mime.getType(fileExtension) || "application/octet-stream",
+      },
     };
     const item = new Photo(obj);
     await item.save();
+    res.status(200).json({ message: "Photo was saved successfully " });
   } catch (error) {
     console.error("Error in postRoute:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -84,7 +90,6 @@ const deleteRoute = async (req, res) => {
     }
     res.status(200).json({
       message: "Photo deleted successfully!",
-      deletedPhoto: deletedPhoto,
     });
   } catch (error) {
     console.error("Error in deleteRoute:", error);
