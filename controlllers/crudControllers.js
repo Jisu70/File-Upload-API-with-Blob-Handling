@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const mime = require("mime");
 
-// Get route
 // GET route to fetch image by ID
 const getRoute = async (req, res) => {
   try {
@@ -20,28 +19,64 @@ const getRoute = async (req, res) => {
   }
 };
 
+// ------------------------------------> To read the file from uploads folder and save it to db
 // Post route
+// const postRoute = async (req, res) => {
+//   try {
+//     const { name, description } = req.body;
+//     if (!req.file) {
+//       return res.status(400).json({ error: "Image file is required" });
+//     }
+//     const fileExtension = path.extname(req.file.originalname).toLowerCase();
+//     const obj = {
+//       name,
+//       description,
+//       img: {
+//         data: fs.readFileSync(
+//           path.join(__dirname, `../uploads/${req.file.filename}`)
+//         ),
+//         contentType: mime.getType(fileExtension) || "application/octet-stream",
+//       },
+//     };
+//     const item = new Photo(obj);
+//     await item.save();
+//     res.status(200).json({ message: "Photo was saved successfully " });
+//   } catch (error) {
+//     console.error("Error in postRoute:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
+
+// Post rout to save photo in database as a binary data [ using multer memory storage ]
 const postRoute = async (req, res) => {
   try {
     const { name, description } = req.body;
-    console.log(name, description);
     if (!req.file) {
       return res.status(400).json({ error: "Image file is required" });
     }
+
+    // Read the file as binary data
+    const fileData = req.file.buffer;
+
+    // Determine the content type of the file
     const fileExtension = path.extname(req.file.originalname).toLowerCase();
+    const contentType =
+      mime.getType(fileExtension) || "application/octet-stream";
+
+    // Create an object to store in the database
     const obj = {
       name,
       description,
       img: {
-        data: fs.readFileSync(
-          path.join(__dirname, `../uploads/${req.file.filename}`)
-        ),
-        contentType: mime.getType(fileExtension) || "application/octet-stream",
+        data: fileData,
+        contentType: contentType,
       },
     };
+
+    // Create a new Photo document and save it to the database
     const item = new Photo(obj);
     await item.save();
-    res.status(200).json({ message: "Photo was saved successfully " });
+    res.status(200).json({ message: "Photo was saved successfully" });
   } catch (error) {
     console.error("Error in postRoute:", error);
     res.status(500).json({ error: "Internal Server Error" });
