@@ -13,7 +13,7 @@ const dbConnection = require("./utils/dbConnect");
 // Routes
 const photoRoutes = require("./routes/crudRoute");
 // api end point
-app.use("/api", photoRoutes);
+app.use("/api/photo", photoRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({ message: " Hello word" });
 });

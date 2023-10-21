@@ -31,7 +31,7 @@ const {
 
 router.get("/:id", getRoute);
 router.post("/", upload.single("img"), postRoute);
-router.put("/:id", putRoute);
+router.put("/:id", upload.single("img"), putRoute);
 router.delete("/:id", deleteRoute);
 
 //Expoting router
